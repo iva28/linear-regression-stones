@@ -75,3 +75,24 @@ library(car)
 sort(sqrt(vif(lm1)))
 # there is no multicolinearity
 
+# printing the diagnostic plots
+graphics.off()
+par(mfrow = c(2,2))
+plot(lm1)
+# The first plot, Residual vs Fitted value, is used for checking if the linearity assumption is satisfied.
+# A pattern could show up in this plot if there is a non-linear relationship between the dependent and independent variables.
+# In this case, the plot indicates a non-linear relationship between the predictors( and the response variable.
+
+# The second plot, Normal Q-Q plot, tells us if residuals are normally distributed.
+# The residuals should be lined well on the straight dashed line.
+# This is the case for the lm1 model, so we can conlude that the assumption for normally distributed residuals is met
+
+# The third plot, Scale-Location, is used for checking the assumption of the equal variance of residuals, homoscedasticity 
+# In this case, the variance of the residuals tends to differ. So, the assumption is not fulfiled.
+
+# The forth plot, Residuals vs Leverage, is used for spotting the presence of high leverage points, since their presence can seriously affect the estimation of the regression coefficients
+# In this case, there aren't any such observations.
+
+# Taken all together, the four plots indicate that our linear model( lm1), and thus its predictions, are trustworthy enough
+
+
