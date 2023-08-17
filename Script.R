@@ -79,6 +79,8 @@ sort(sqrt(vif(lm1)))
 graphics.off()
 par(mfrow = c(2,2))
 plot(lm1)
+# resetting plotting area
+par(mfrow = c(1,1))
 # The first plot, Residual vs Fitted value, is used for checking if the linearity assumption is satisfied.
 # A pattern could show up in this plot if there is a non-linear relationship between the dependent and independent variables.
 # In this case, the plot indicates a non-linear relationship between the predictors( and the response variable.
@@ -95,4 +97,47 @@ plot(lm1)
 
 # Taken all together, the four plots indicate that our linear model( lm1), and thus its predictions, are trustworthy enough
 
+# making predictions with model lm1
+lm1.pred <- predict(lm1, newdata = test.data)
+head(lm1.pred)
 
+# To examine the predicted against the real values of the response variable (energy), 
+# we can plot their distributions one against the other.
+test.data.lm1 <- cbind(test.data, predicted = lm1.pred)
+# plot actual (energy) vs. predicted values
+library(ggplot2)
+ggplot(data = test.data.lm1) +
+  geom_density(mapping = aes(x=energy, color = 'real')) +
+  geom_density(mapping = aes(x=predicted, color = 'predicted')) +
+  scale_colour_discrete(name ="energy distribution") +
+  theme_classic()
+# To evaluate the predictive power of the model, we’ll compute R-squared on the test data
+# calculate RSS
+lm1.test.RSS <- sum((lm1.pred - test.data$energy)^2)
+# calculate TSS
+lm1.test.TSS <- sum((mean(train.data$energy) - test.data$energy)^2)
+# calculate R-squared on the test data
+lm1.test.R2 <- 1 - lm1.test.RSS/lm1.test.TSS
+lm1.test.R2
+# R - squared value on the test set( 59.55433%) is less than the one on the train set, whish is around 65%
+# calculate RMSE
+lm1.test.RMSE <- sqrt(lm1.test.RSS/nrow(test.data))
+lm1.test.RMSE
+# compare energy mean to the RMSE
+lm1.test.RMSE/mean(test.data$energy)
+# The error we are making in predictions is not small, it is around 15% of mean value
+
+# making another model with all variables as predictors
+lm2 <- lm(energy ~ ., data = train.data)
+summary(lm2)
+# R-squared value is better, 78.32% of the variability in the energy value of songs
+# variables acousticness, danceability, loudness, speechiness and valence have been found to be significant predictors
+
+# checking for multicolinearity
+sort(sqrt(vif(lm2)))
+# varibles Year Released and Year Recorded are causing multicollinearity, so we will make another model 
+# First the variable Year Released will be exluded
+lm3 <- lm(energy ~. -(`Year Released`), data = train.data)
+# checking for multicolinearity
+sort(sqrt(vif(lm3)))
+# the multicollinearity issue has been solved
