@@ -141,3 +141,48 @@ lm3 <- lm(energy ~. -(`Year Released`), data = train.data)
 # checking for multicolinearity
 sort(sqrt(vif(lm3)))
 # the multicollinearity issue has been solved
+summary(lm3)
+# R - squared value is 78.3% which is better than the lm1 model, but we will make another model consisting only of significant predictors
+lm.final <- lm(energy ~ acousticness+danceability+loudness+speechiness+valence, data = train.data)
+# checking for multicollinearity
+sort(sqrt(vif(lm.final)))
+
+summary(lm.final)
+# R-squared and Residual standard error are both better for lm.final model in comparison to lm1 model
+# R-squared value is 0.774, meaning 77,4% variability of response variable is explained  by model
+# Residual standard error is 0.09024
+
+# All predictor variables are significant predictors for response variable energy
+
+# Based on the coefficient of the acousticness variable, with each unit increase in acousticness, energy value decreases by 0.137308 units
+# Based on the coefficient of the danceability variable, with each unit increase in danceability, energy value decreases by 0.239884 units
+# Based on the coefficient of the loudness variable, with each unit increase in loudness, energy value increases by 0.034714 units
+# Based on the coefficient of the speechiness variable, with each unit increase in speechiness, energy value increases by 1.273658 units
+# Based on the coefficient of the valence variable, with each unit increase in valence, energy value increases by 0.346245 units
+
+# making predictions with lm.final model
+lm.final.pred <- predict(lm.final, newdata = test.data)
+head(lm.final.pred)
+
+test.data.lmfinal <- cbind(test.data, predicted = lm.final.pred)
+# plot actual (energy) vs. predicted values
+library(ggplot2)
+ggplot(data = test.data.lmfinal) +
+  geom_density(mapping = aes(x=energy, color = 'real')) +
+  geom_density(mapping = aes(x=predicted, color = 'predicted')) +
+  scale_colour_discrete(name ="energy distribution") +
+  theme_classic()
+
+# calculating R - squared, RMSE values
+lmfinal.test.RSS <- sum((lm.final.pred - test.data$energy)^2)
+# TSS is the same
+lmfinal.test.R2 <- 1 - lmfinal.test.RSS/lm1.test.TSS
+lmfinal.test.R2
+# R - squared value on test set is 75% and it is very similar to the one obtained on the training set, confirming the stability of model lm.final
+
+# calculate RMSE
+lmfinal.test.RMSE <- sqrt(lmfinal.test.RSS/nrow(test.data))
+lmfinal.test.RMSE
+
+lmfinal.test.RMSE/ mean(test.data$energy)
+# The error we are making in predictions is around 12% of mean value
