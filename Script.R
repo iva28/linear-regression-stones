@@ -30,23 +30,25 @@ corr.matrix <- cor(dataset)
 library(corrplot)
 # plotting the correlation matrix to see relevant predictors for variable 'energy'
 corrplot.mixed(corr.matrix,tl.cex = 0.75, number.cex = 0.75)
-# Predictor loudness and valence have the highest correlation with the outcome variable
+# Predictors 'loudness' and 'valence' have the highest correlation with the outcome variable 'energy'
 # Correlation between loudness and energy is high and amounts to 0.72
-# Correlation between valence and energy  is at threshold value and amounts to 0.49, but it will be imcluded in model
+# Correlation between valence and energy  is at threshold value and amounts to 0.49, but it will be included in model
 
 # plot 'loudness' against the response variable
 library(ggplot2)
 ggplot(data = dataset, mapping = aes(x = loudness, y = energy)) +
   geom_point(shape = 1) +
   theme_classic()
-# From the plot we can see that the louder the song is the more energetic it is
+# From the plot we can see positive correlation between these two variables, and that the louder the song is the more energetic it is
 
 # plot 'valence' against the response variable
 library(ggplot2)
 ggplot(data = dataset, mapping = aes(x = valence, y = energy)) +
   geom_point(shape = 1) +
+  geom_smooth(method = 'lm')
   theme_classic()
-
+# From the plot we can see a lot of variability in the data, but there seems to be linear relationship between valence and energy variables
+  
 # creating train and test data sets
 library(caret)
 # set seed
@@ -58,22 +60,27 @@ test.data <- dataset[-train.indices,]
 
 # bulding Linear Regression model
 lm1 <- lm(energy ~ loudness + valence, data = train.data)
+
 summary(lm1)
+# In the Intercept segment of summary output we can see that if loudness and valence attribute of song is 0, the energy of the song would be
+# 0.841367
+
 # Based on the coefficient of the loudness variable, with each unit increase in loudness, energy value increases by 0.040826 units
 # Based on the coefficient of the valence variable, with each unit increase in valence, energy value increases by 0.284907 units
-# Both variables( loudness and valence) are significant predictors of the response variable energy, since the coefficents that are 
+# Both variables( loudness and valence) are significant predictors of the response variable energy, since the coefficients that are 
 # associated with these input variables are significantly different than zero
 
-# Residual standard error represents the difference between predicted and real values and it amounts to 0.1109
+# Residual standard error measures the variability of outcome variable( in this case 'energy') that is not explained by independent variables
+# Residual standard error is 0.1109, meaning that the regression model predicts the energy of a song with an average error of about 0.1109
 
 # Based on the R-squared value, this model explains 65.93% of the variability in the energy value of songs
 # Based on the F statistic( 228.3) and the associated p -value( < 0.05), there is a significant relationship between the
 # predictors and the response variable 
 
-# Since there are two predictor variables, the multicolinearity should be checked
+# Since there are two predictor variables, the multicollinearity should be checked
 library(car)
 sort(sqrt(vif(lm1)))
-# there is no multicolinearity
+# there is no multicollinearity
 
 # printing the diagnostic plots
 graphics.off()
@@ -83,14 +90,14 @@ plot(lm1)
 par(mfrow = c(1,1))
 # The first plot, Residual vs Fitted value, is used for checking if the linearity assumption is satisfied.
 # A pattern could show up in this plot if there is a non-linear relationship between the dependent and independent variables.
-# In this case, the plot indicates a non-linear relationship between the predictors( and the response variable.
+# In this case, the plot indicates a non-linear relationship between the predictors and the response variable
 
 # The second plot, Normal Q-Q plot, tells us if residuals are normally distributed.
 # The residuals should be lined well on the straight dashed line.
-# This is the case for the lm1 model, so we can conlude that the assumption for normally distributed residuals is met
+# This is the case for the lm1 model, so we can conclude that the assumption for normally distributed residuals is met
 
 # The third plot, Scale-Location, is used for checking the assumption of the equal variance of residuals, homoscedasticity 
-# In this case, the variance of the residuals tends to differ. So, the assumption is not fulfiled.
+# In this case, the variance of the residuals tends to differ. So, the assumption is not fullfiled.
 
 # The forth plot, Residuals vs Leverage, is used for spotting the presence of high leverage points, since their presence can seriously affect the estimation of the regression coefficients
 # In this case, there aren't any such observations.
@@ -119,7 +126,7 @@ lm1.test.TSS <- sum((mean(train.data$energy) - test.data$energy)^2)
 # calculate R-squared on the test data
 lm1.test.R2 <- 1 - lm1.test.RSS/lm1.test.TSS
 lm1.test.R2
-# R - squared value on the test set( 59.55433%) is less than the one on the train set, whish is around 65%
+# R - squared value on the test set( 59.55433%) is less than the one on the train set, which is around 65%
 # calculate RMSE
 lm1.test.RMSE <- sqrt(lm1.test.RSS/nrow(test.data))
 lm1.test.RMSE
@@ -130,7 +137,7 @@ lm1.test.RMSE/mean(test.data$energy)
 # making another model with all variables as predictors
 lm2 <- lm(energy ~ ., data = train.data)
 summary(lm2)
-# R-squared value is better, 78.32% of the variability in the energy value of songs
+# R-squared value is better, 78.32% of the variability in the energy value of songs has been explained by the model
 # variables acousticness, danceability, loudness, speechiness and valence have been found to be significant predictors
 
 # checking for multicolinearity
@@ -159,6 +166,7 @@ summary(lm.final)
 # Based on the coefficient of the loudness variable, with each unit increase in loudness, energy value increases by 0.034714 units
 # Based on the coefficient of the speechiness variable, with each unit increase in speechiness, energy value increases by 1.273658 units
 # Based on the coefficient of the valence variable, with each unit increase in valence, energy value increases by 0.346245 units
+
 
 # making predictions with lm.final model
 lm.final.pred <- predict(lm.final, newdata = test.data)
